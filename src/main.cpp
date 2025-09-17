@@ -22,12 +22,19 @@ GNU General Public License for more details.
 #include "bh.h"
 #include "textures.h"
 #include "ogl.h"
-#include "splash_screen.h"
 #include "audio.h"
 #include "font.h"
 #include "tools.h"
 #include "ogl_test.h"
 #include "winsys.h"
+// Added for direct race launch setup
+#include "particles.h"
+#include "course.h"
+#include "env.h"
+#include "game_ctrl.h"
+#include "score.h"
+#include "regist.h"
+#include "loading.h"
 #include <iostream>
 #include <ctime>
 #include <cstring>
@@ -86,9 +93,51 @@ int main(int argc, char **argv) {
 	Music.SetVolume(param.music_volume);
 
 	switch (g_game.argument) {
-		case 0:
-			State::manager.Run(SplashScreen);
+		case 0: {
+			// Directly set up a default race and go to Loading state (bypass SplashScreen)
+			init_ui_snow();
+
+			Course.MakeStandardPolyhedrons();
+			Sound.LoadSoundList();
+			(void)Char.LoadCharacterList();
+			Course.LoadObjectTypes();
+			(void)Course.LoadTerrainTypes();
+
+			if (Env.LoadEnvironmentList()) {
+				(void)Course.LoadCourseList();
+				Score.LoadHighScore();
+				Events.LoadEventList();
+			}
+
+			if (Players.LoadAvatars()) { // before LoadPlayers !!!
+				Players.LoadPlayers();
+			}
+
+			// Auto-configure default player/character
+			Players.ResetControls();
+			Players.AllocControl(g_game.start_player);
+			g_game.player = Players.GetPlayer(g_game.start_player);
+			if (!Char.CharList.empty())
+				g_game.character = &Char.CharList[0];
+			Char.FreeCharacterPreviews();
+
+			// Default race conditions
+			g_game.mirrorred = false;
+			g_game.light_id = 0;
+			g_game.snow_id = 0;
+			g_game.wind_id = 0;
+			g_game.game_type = PRACTICING;
+
+			if (Course.currentCourseList && Course.currentCourseList->size() > 0) {
+				g_game.course = &(*Course.currentCourseList)[0];
+				g_game.theme_id = (*Course.currentCourseList)[0].music_theme;
+				State::manager.Run(Loading);
+			} else {
+				// Fallback to original registration flow if no course is available
+				State::manager.Run(Regist);
+			}
 			break;
+		}
 		case 4:
 			g_game.toolmode = TUXSHAPE;
 			State::manager.Run(Tools);
