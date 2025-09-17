@@ -9,16 +9,19 @@ cd "$(dirname "$0")"
 
 # Configure if not already
 if [ ! -f Makefile ]; then
-    ./configure
+    ./configure --prefix="$(pwd)/build"
 fi
 
 # Build
 make -j$(nproc)
 
-echo "Build complete. Binary is at src/etr"
+# Install
+make install
+
+echo "Build complete. Binary is at build/bin/etr"
 
 # Copy binary to project root before cleanup
-cp src/etr build/etr
+cp build/bin/etr build/etr
 
 make distclean
 
