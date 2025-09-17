@@ -47,6 +47,35 @@
             mainProgram = "etr";
           };
         };
+
+        devShells.default = pkgs.mkShell {
+          nativeBuildInputs = [
+            pkgs.pkg-config
+            pkgs.intltool
+            pkgs.automake
+            pkgs.autoconf
+            pkgs.libtool
+            pkgs.gcc
+          ];
+          buildInputs = [
+            pkgs.libGLU
+            pkgs.libGL
+            pkgs.xorg.libX11
+            pkgs.xorg.xorgproto
+            pkgs.tcl
+            pkgs.libglut
+            pkgs.freetype
+            pkgs.sfml_2
+            pkgs.xorg.libXi
+            pkgs.xorg.libXmu
+            pkgs.xorg.libXext
+            pkgs.xorg.libXt
+            pkgs.xorg.libSM
+            pkgs.xorg.libICE
+            pkgs.libpng
+            pkgs.gettext
+          ];
+        };
       }
     );
 }
