@@ -40,6 +40,8 @@ GNU General Public License for more details.
 #include "physics.h"
 #include "tux.h"
 
+#include <iostream>
+
 CGameOver GameOver;
 
 static CKeyframe *final_frame;
@@ -146,36 +148,8 @@ void GameOverMessage(const CControl *ctrl) {
 void CGameOver::Enter() {
 	if (!g_game.raceaborted) highscore_pos = Score.CalcRaceResult();
 
-	if (g_game.game_type == CUPRACING) {
-		if (g_game.race_result >= 0) {
-			Music.PlayTheme(g_game.theme_id, MUS_WONRACE);
-		} else {
-			Music.PlayTheme(g_game.theme_id, MUS_LOSTRACE);
-		}
-	} else {
-		if (g_game.raceaborted) {
-			Music.PlayTheme(g_game.theme_id, MUS_LOSTRACE);
-		} else {
-			Music.PlayTheme(g_game.theme_id, MUS_WONRACE);
-		}
-	}
-
-
-	if (g_game.raceaborted || !g_game.use_keyframe) {
-		final_frame = nullptr;
-	} else {
-		if (g_game.game_type == CUPRACING) {
-			if (g_game.race_result < 0)
-				final_frame = g_game.character->GetKeyframe(LOSTRACE);
-			else final_frame = g_game.character->GetKeyframe(WONRACE);
-		} else final_frame = g_game.character->GetKeyframe(FINISH);
-
-		if (!g_game.raceaborted) {
-			const CControl *ctrl = g_game.player->ctrl;
-			final_frame->Init(ctrl->cpos, -0.18);
-		}
-	}
-	SetStationaryCamera(true);
+	std::cout << "Score: " << g_game.score << std::endl;
+	QuitGameOver();
 }
 
 
