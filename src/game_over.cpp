@@ -149,7 +149,7 @@ void CGameOver::Enter() {
 	if (!g_game.raceaborted) highscore_pos = Score.CalcRaceResult();
 
 	std::cout << "Score: " << g_game.score << std::endl;
-	QuitGameOver();
+	State::manager.RequestQuit();
 }
 
 

@@ -149,5 +149,5 @@ int main(int argc, char **argv) {
 
 	Winsys.Quit();
 
-	return 0;
+	return g_game.score;
 }
