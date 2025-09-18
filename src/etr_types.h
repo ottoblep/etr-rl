@@ -19,6 +19,7 @@ GNU General Public License for more details.
 #define ETR_TYPES_H
 
 #include "vectors.h"
+#include <functional>
 
 enum TToolMode {
 	NONE,
@@ -45,6 +46,15 @@ struct TPlayer;
 struct TCourse;
 struct TRace;
 struct TCharacter;
+
+struct SteeringAction {
+    float turn_fact;
+    bool paddling;
+    bool braking;
+    bool charging;
+};
+
+using SteeringFunc = std::function<SteeringAction(const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne)>;
 
 struct TGameData {
 	TToolMode toolmode;
@@ -78,6 +88,8 @@ struct TGameData {
 	int herring;			// catched herrings during the race
 	int race_result;		// tuxlifes, only for a single race, see game_ctrl
 	bool raceaborted;
+
+	SteeringFunc custom_steering;
 };
 
 class CControl;

@@ -38,6 +38,7 @@ GNU General Public License for more details.
 #include "physics.h"
 #include "tux.h"
 #include <algorithm>
+#include <functional>
 
 #define MAX_JUMP_AMT 1.0
 #define ROLL_DECAY 0.2
@@ -280,45 +281,68 @@ static void PlayTerrainSound(CControl *ctrl, bool airborne) {
 }
 
 // ----------------------- controls -----------------------------------
-static void CalcSteeringControls(CControl *ctrl, float time_step) {
-	if (stick_turn) {
-		ctrl->turn_fact = stick_turnfact;
+static void CalcSteeringControls(CControl *ctrl, float time_step, bool airborne) {
+	if (g_game.custom_steering) {
+		auto action = g_game.custom_steering(ctrl->cpos, ctrl->cvel, time_step, airborne);
+		ctrl->turn_fact = action.turn_fact;
 		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
 		ctrl->turn_animation = clamp(-1.0, ctrl->turn_animation, 1.0);
-	} else if (left_turn ^ right_turn) {
-		if (left_turn) ctrl->turn_fact = -1.0;
-		else ctrl->turn_fact = 1.0;
-		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
-		ctrl->turn_animation = clamp(-1.0, ctrl->turn_animation, 1.0);
+		if (action.paddling && !ctrl->is_paddling) {
+			ctrl->is_paddling = true;
+			ctrl->paddle_time = g_game.time;
+		}
+		ctrl->is_braking = action.braking;
+		bool charge = action.charging;
+		bool invcharge = !action.charging;
+		if (charge && !ctrl->jump_charging && !ctrl->jumping) {
+			ctrl->jump_charging = true;
+			charge_start_time = g_game.time;
+		}
+		if (invcharge && ctrl->jump_charging) {
+			ctrl->jump_charging = false;
+			ctrl->begin_jump = true;
+		}
 	} else {
-		ctrl->turn_fact = 0.0;
-		if (time_step < ROLL_DECAY) {
-			ctrl->turn_animation *= 1.0 - time_step / ROLL_DECAY;
+		if (stick_turn) {
+			ctrl->turn_fact = stick_turnfact;
+			ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
+			ctrl->turn_animation = clamp(-1.0, ctrl->turn_animation, 1.0);
+		} else if (left_turn ^ right_turn) {
+			if (left_turn) ctrl->turn_fact = -1.0;
+			else ctrl->turn_fact = 1.0;
+			ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
+			ctrl->turn_animation = clamp(-1.0, ctrl->turn_animation, 1.0);
 		} else {
-			ctrl->turn_animation = 0.0;
+			ctrl->turn_fact = 0.0;
+			if (time_step < ROLL_DECAY) {
+				ctrl->turn_animation *= 1.0 - time_step / ROLL_DECAY;
+			} else {
+				ctrl->turn_animation = 0.0;
+			}
+		}
+
+		bool paddling = key_paddling || stick_paddling;
+		if (paddling && ctrl->is_paddling == false) {
+			ctrl->is_paddling = true;
+			ctrl->paddle_time = g_game.time;
+		}
+
+		bool braking = key_braking || stick_braking;
+		ctrl->is_braking = braking;
+
+		bool charge = key_charging || stick_charging;
+		bool invcharge = !key_charging && !stick_charging;
+		if ((charge) && !ctrl->jump_charging && !ctrl->jumping) {
+			ctrl->jump_charging = true;
+			charge_start_time = g_game.time;
+		}
+		if ((invcharge) && ctrl->jump_charging) {
+			ctrl->jump_charging = false;
+			ctrl->begin_jump = true;
 		}
 	}
 
-	bool paddling = key_paddling || stick_paddling;
-	if (paddling && ctrl->is_paddling == false) {
-		ctrl->is_paddling = true;
-		ctrl->paddle_time = g_game.time;
-	}
-
-	bool braking = key_braking || stick_braking;
-	ctrl->is_braking = braking;
-
-	bool charge = key_charging || stick_charging;
-	bool invcharge = !key_charging && !stick_charging;
 	CalcJumpEnergy(time_step);
-	if ((charge) && !ctrl->jump_charging && !ctrl->jumping) {
-		ctrl->jump_charging = true;
-		charge_start_time = g_game.time;
-	}
-	if ((invcharge) && ctrl->jump_charging) {
-		ctrl->jump_charging = false;
-		ctrl->begin_jump = true;
-	}
 }
 
 static void CalcFinishControls(CControl *ctrl, float timestep, bool airborne) {
@@ -377,7 +401,7 @@ void CRacing::Loop(float time_step) {
 	Env.SetupFog();
 	CalcTrickControls(ctrl, time_step, airborne);
 
-	if (!g_game.finish) CalcSteeringControls(ctrl, time_step);
+	if (!g_game.finish) CalcSteeringControls(ctrl, time_step, airborne);
 	else CalcFinishControls(ctrl, time_step, airborne);
 	PlayTerrainSound(ctrl, airborne);
 

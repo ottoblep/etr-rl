@@ -38,6 +38,7 @@ GNU General Public License for more details.
 #include <iostream>
 #include <ctime>
 #include <cstring>
+#include <functional>
 
 TGameData g_game;
 
@@ -68,7 +69,7 @@ void InitGame(int argc, char **argv) {
 	g_game.treevar = 3;
 }
 
-int run_game_once() {
+int run_game_once(SteeringFunc custom = {}) {
 	// Directly set up a default race and go to Loading state (bypass SplashScreen)
 	init_ui_snow();
 
@@ -112,6 +113,8 @@ int run_game_once() {
 		State::manager.Run(Regist);
 	}
 
+	State::manager.ResetQuit();
+	Course.ResetCourse();
 	return g_game.score;
 }
 
@@ -121,6 +124,7 @@ int main(int argc, char **argv) {
 	std::srand(std::time(nullptr));
 	InitConfig();
 	InitGame(argc, argv);
+
 	Winsys.Init();
 	InitOpenglExtensions();
 
@@ -138,9 +142,8 @@ int main(int argc, char **argv) {
 	Music.LoadMusicList();
 	Music.SetVolume(param.music_volume);
 
+	g_game.custom_steering = {};
 	int score = run_game_once();
-	State::manager.ResetQuit();
-	Course.ResetCourse();
 	score = run_game_once();
 
 	Winsys.Quit();
