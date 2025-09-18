@@ -142,7 +142,9 @@ int main(int argc, char **argv) {
 	Music.LoadMusicList();
 	Music.SetVolume(param.music_volume);
 
-	g_game.custom_steering = {};
+	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
+		return { -1.0f, true, false, false }; // Always steer left and accelerate
+	};
 	int score = run_game_once();
 	score = run_game_once();
 
