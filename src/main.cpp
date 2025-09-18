@@ -68,7 +68,7 @@ void InitGame(int argc, char **argv) {
 	g_game.treevar = 3;
 }
 
-void run_game_once() {
+int run_game_once() {
 	// Directly set up a default race and go to Loading state (bypass SplashScreen)
 	init_ui_snow();
 
@@ -111,6 +111,8 @@ void run_game_once() {
 		// Fallback to original registration flow if no course is available
 		State::manager.Run(Regist);
 	}
+
+	return g_game.score;
 }
 
 int main(int argc, char **argv) {
@@ -136,12 +138,12 @@ int main(int argc, char **argv) {
 	Music.LoadMusicList();
 	Music.SetVolume(param.music_volume);
 
-	run_game_once();
+	int score = run_game_once();
 	State::manager.ResetQuit();
 	Course.ResetCourse();
-	run_game_once();
+	score = run_game_once();
 
 	Winsys.Quit();
 
-	return g_game.score;
+	return 0;
 }
