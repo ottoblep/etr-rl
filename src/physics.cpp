@@ -156,6 +156,8 @@ void CControl::AdjustTreeCollision(const TVector3d& pos, TVector3d *vel) const {
 	TVector3d treeLoc;
 
 	if (CheckTreeCollisions(pos, &treeLoc)) {
+		if (!g_game.finish) State::manager.RequestEnterState(GameOver);
+
 		TVector3d treeNml(
 		    pos.x - treeLoc.x,
 		    0,
