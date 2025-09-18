@@ -68,10 +68,54 @@ void InitGame(int argc, char **argv) {
 	g_game.treevar = 3;
 }
 
+void run_game_once() {
+	// Directly set up a default race and go to Loading state (bypass SplashScreen)
+	init_ui_snow();
+
+	Course.MakeStandardPolyhedrons();
+	Sound.LoadSoundList();
+	(void)Char.LoadCharacterList();
+	Course.LoadObjectTypes();
+	(void)Course.LoadTerrainTypes();
+
+	if (Env.LoadEnvironmentList()) {
+		(void)Course.LoadCourseList();
+		Score.LoadHighScore();
+		Events.LoadEventList();
+	}
+
+	if (Players.LoadAvatars()) { // before LoadPlayers !!!
+		Players.LoadPlayers();
+	}
+
+	// Auto-configure default player/character
+	Players.ResetControls();
+	Players.AllocControl(g_game.start_player);
+	g_game.player = Players.GetPlayer(g_game.start_player);
+	if (!Char.CharList.empty())
+		g_game.character = &Char.CharList[0];
+	Char.FreeCharacterPreviews();
+
+	// Default race conditions
+	g_game.mirrorred = false;
+	g_game.light_id = 0;
+	g_game.snow_id = 0;
+	g_game.wind_id = 0;
+	g_game.game_type = PRACTICING;
+
+	if (Course.currentCourseList && Course.currentCourseList->size() > 0) {
+		g_game.course = &(*Course.currentCourseList)[0];
+		g_game.theme_id = (*Course.currentCourseList)[0].music_theme;
+		State::manager.Run(Loading);
+	} else {
+		// Fallback to original registration flow if no course is available
+		State::manager.Run(Regist);
+	}
+}
+
 int main(int argc, char **argv) {
 	std::cout << "\n----------- Extreme Tux Racer " ETR_VERSION_STRING " ----------------";
 	std::cout << "\n----------- (C) 2010-2024 Extreme Tux Racer Team  --------\n\n";
-
 	std::srand(std::time(nullptr));
 	InitConfig();
 	InitGame(argc, argv);
@@ -92,60 +136,10 @@ int main(int argc, char **argv) {
 	Music.LoadMusicList();
 	Music.SetVolume(param.music_volume);
 
-	switch (g_game.argument) {
-		case 0: {
-			// Directly set up a default race and go to Loading state (bypass SplashScreen)
-			init_ui_snow();
-
-			Course.MakeStandardPolyhedrons();
-			Sound.LoadSoundList();
-			(void)Char.LoadCharacterList();
-			Course.LoadObjectTypes();
-			(void)Course.LoadTerrainTypes();
-
-			if (Env.LoadEnvironmentList()) {
-				(void)Course.LoadCourseList();
-				Score.LoadHighScore();
-				Events.LoadEventList();
-			}
-
-			if (Players.LoadAvatars()) { // before LoadPlayers !!!
-				Players.LoadPlayers();
-			}
-
-			// Auto-configure default player/character
-			Players.ResetControls();
-			Players.AllocControl(g_game.start_player);
-			g_game.player = Players.GetPlayer(g_game.start_player);
-			if (!Char.CharList.empty())
-				g_game.character = &Char.CharList[0];
-			Char.FreeCharacterPreviews();
-
-			// Default race conditions
-			g_game.mirrorred = false;
-			g_game.light_id = 0;
-			g_game.snow_id = 0;
-			g_game.wind_id = 0;
-			g_game.game_type = PRACTICING;
-
-			if (Course.currentCourseList && Course.currentCourseList->size() > 0) {
-				g_game.course = &(*Course.currentCourseList)[0];
-				g_game.theme_id = (*Course.currentCourseList)[0].music_theme;
-				State::manager.Run(Loading);
-			} else {
-				// Fallback to original registration flow if no course is available
-				State::manager.Run(Regist);
-			}
-			break;
-		}
-		case 4:
-			g_game.toolmode = TUXSHAPE;
-			State::manager.Run(Tools);
-			break;
-		case 9:
-			State::manager.Run(OglTest);
-			break;
-	}
+	run_game_once();
+	State::manager.ResetQuit();
+	Course.ResetCourse();
+	run_game_once();
 
 	Winsys.Quit();
 

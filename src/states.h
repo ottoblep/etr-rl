@@ -49,6 +49,7 @@ public:
 	public:
 		void RequestEnterState(State& state) { next = &state; }
 		void RequestQuit() { quit = true; }
+		void ResetQuit() { quit = false; }
 		void Run(State& entranceState);
 		State* PreviousState() { return previous; }
 		State* CurrentState() { return current; }
