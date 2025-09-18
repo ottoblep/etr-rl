@@ -388,6 +388,7 @@ static double adjust_particle_count(double count) {
 }
 
 void generate_particles(const CControl *ctrl, double dtime, const TVector3d& pos, double speed) {
+	if (g_game.simulated_only) return;
 	double surf_y = Course.FindYCoord(pos.x, pos.z);
 
 	int id = Course.GetTerrainIdx(pos.x, pos.z, 0.5);
@@ -584,6 +585,7 @@ void CFlakes::MakeSnowFlake(std::size_t ar, std::size_t i) {
 }
 
 void CFlakes::GenerateSnowFlakes(const CControl *ctrl) {
+	if (g_game.simulated_only) return;
 	if (g_game.snow_id < 1) return;
 	snow_lastpos = ctrl->cpos;
 	for (std::size_t ar=0; ar<areas.size(); ar++) {

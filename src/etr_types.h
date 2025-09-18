@@ -67,6 +67,7 @@ struct TGameData {
 	bool finish;
 	bool use_keyframe;
 	bool force_treemap;
+	bool simulated_only;
 
 	// course and race params
 	bool mirrorred;

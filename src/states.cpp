@@ -34,7 +34,9 @@ void State::Manager::Run(State& entranceState) {
 	current = &entranceState;
 	current->Enter();
 	while (!quit) {
-		PollEvent();
+		if (!g_game.simulated_only) {
+			PollEvent();
+		}
 		if (next)
 			EnterNextState();
 		CallLoopFunction();
@@ -118,7 +120,11 @@ void State::Manager::PollEvent() {
 void State::Manager::CallLoopFunction() {
 	check_gl_error();
 
-	g_game.time_step = std::max(0.0001f, timer.getElapsedTime().asSeconds());
-	timer.restart();
+	if (g_game.simulated_only) {
+		g_game.time_step = 1.0f / 60.0f;  // Fixed time step for simulation
+	} else {
+		g_game.time_step = std::max(0.0001f, timer.getElapsedTime().asSeconds());
+		timer.restart();
+	}
 	current->Loop(g_game.time_step);
 }

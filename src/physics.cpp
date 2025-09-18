@@ -565,7 +565,7 @@ void CControl::SolveOdeSystem(double timestep) {
 
 		t = t + h;
 		double speed = new_vel.Length();
-		if (param.perf_level > 2) generate_particles(this, h, new_pos, speed);
+		if (param.perf_level > 2 && !g_game.simulated_only) generate_particles(this, h, new_pos, speed);
 
 		new_f = CalcNetForce(new_pos, new_vel);
 

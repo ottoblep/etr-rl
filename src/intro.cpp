@@ -85,10 +85,14 @@ void CIntro::Enter() {
 		}
 	}
 
-	InitSnow(ctrl);
-	InitWind();
+	if (!g_game.simulated_only) {
+		InitSnow(ctrl);
+		InitWind();
+	}
 
-	Music.PlayTheme(g_game.theme_id, MUS_RACING);
+	if (!g_game.simulated_only) {
+		Music.PlayTheme(g_game.theme_id, MUS_RACING);
+	}
 	param.show_hud = true;
 }
 
@@ -101,29 +105,31 @@ void CIntro::Loop(float time_step) {
 		startframe->Update(time_step);
 	} else State::manager.RequestEnterState(Racing);
 
-	ClearRenderContext();
-	Env.SetupFog();
+	if (!g_game.simulated_only) {
+		ClearRenderContext();
+		Env.SetupFog();
 
-	update_view(ctrl, time_step);
-	SetupViewFrustum(ctrl);
+		update_view(ctrl, time_step);
+		SetupViewFrustum(ctrl);
 
-	Env.DrawSkybox(ctrl->viewpos);
+		Env.DrawSkybox(ctrl->viewpos);
 
-	Env.DrawFog();
-	Env.SetupLight();
-	RenderCourse();
-	DrawTrackmarks();
-	DrawTrees();
+		Env.DrawFog();
+		Env.SetupLight();
+		RenderCourse();
+		DrawTrackmarks();
+		DrawTrees();
 
-	UpdateWind(time_step);
-	UpdateSnow(time_step, ctrl);
-	DrawSnow(ctrl);
+		UpdateWind(time_step);
+		UpdateSnow(time_step, ctrl);
+		DrawSnow(ctrl);
 
-	g_game.character->shape->Draw();
-	DrawHud(ctrl);
+		g_game.character->shape->Draw();
+		DrawHud(ctrl);
 
-	Reshape(width, height);
-	Winsys.SwapBuffers();
+		Reshape(width, height);
+		Winsys.SwapBuffers();
+	}
 }
 // -----------------------------------------------------------------------
 

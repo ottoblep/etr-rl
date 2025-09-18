@@ -397,13 +397,17 @@ void CRacing::Loop(float time_step) {
 	double ycoord = Course.FindYCoord(ctrl->cpos.x, ctrl->cpos.z);
 	bool airborne = (bool)(ctrl->cpos.y > (ycoord + JUMP_MAX_START_HEIGHT));
 
-	ClearRenderContext();
-	Env.SetupFog();
+	if (!g_game.simulated_only) {
+		ClearRenderContext();
+		Env.SetupFog();
+	}
 	CalcTrickControls(ctrl, time_step, airborne);
 
 	if (!g_game.finish) CalcSteeringControls(ctrl, time_step, airborne);
 	else CalcFinishControls(ctrl, time_step, airborne);
-	PlayTerrainSound(ctrl, airborne);
+	if (!g_game.simulated_only) {
+		PlayTerrainSound(ctrl, airborne);
+	}
 
 //  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 	ctrl->UpdatePlayerPos(time_step);
@@ -413,25 +417,27 @@ void CRacing::Loop(float time_step) {
 	update_view(ctrl, time_step);
 	UpdateTrackmarks(ctrl);
 
-	SetupViewFrustum(ctrl);
-	if (sky) Env.DrawSkybox(ctrl->viewpos);
-	if (fog) Env.DrawFog();
-	Env.SetupLight();
-	if (terr) RenderCourse();
-	DrawTrackmarks();
-	if (trees) DrawTrees();
-	if (param.perf_level > 2) {
-		update_particles(time_step);
-		draw_particles(ctrl);
-	}
-	g_game.character->shape->Draw();
-	UpdateWind(time_step);
-	UpdateSnow(time_step, ctrl);
-	DrawSnow(ctrl);
-	DrawHud(ctrl);
+	if (!g_game.simulated_only) {
+		SetupViewFrustum(ctrl);
+		if (sky) Env.DrawSkybox(ctrl->viewpos);
+		if (fog) Env.DrawFog();
+		Env.SetupLight();
+		if (terr) RenderCourse();
+		DrawTrackmarks();
+		if (trees) DrawTrees();
+		if (param.perf_level > 2) {
+			update_particles(time_step);
+			draw_particles(ctrl);
+		}
+		g_game.character->shape->Draw();
+		UpdateWind(time_step);
+		UpdateSnow(time_step, ctrl);
+		DrawSnow(ctrl);
+		DrawHud(ctrl);
 
-	Reshape(Winsys.resolution.width, Winsys.resolution.height);
-	Winsys.SwapBuffers();
+		Reshape(Winsys.resolution.width, Winsys.resolution.height);
+		Winsys.SwapBuffers();
+	}
 	if (g_game.finish == false) g_game.time += time_step;
 }
 

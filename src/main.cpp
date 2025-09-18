@@ -42,17 +42,9 @@ GNU General Public License for more details.
 
 TGameData g_game;
 
-void InitGame(int argc, char **argv) {
+void InitGame() {
 	g_game.toolmode = NONE;
 	g_game.argument = 0;
-	if (argc == 4) {
-		if (std::strcmp("--char", argv[1]) == 0)
-			g_game.argument = 4;
-		Tools.SetParameter(argv[2], argv[3]);
-	} else if (argc == 2) {
-		if (std::strcmp(argv[1], "9") == 0)
-			g_game.argument = 9;
-	}
 
 	g_game.player = nullptr;
 	g_game.start_player = 0;
@@ -69,12 +61,32 @@ void InitGame(int argc, char **argv) {
 	g_game.treevar = 3;
 }
 
-int run_game_once(SteeringFunc custom = {}) {
+void init_graphics() {
+	Winsys.Init();
+	InitOpenglExtensions();
+
+	// theses resources must or should be loaded before splashscreen starts
+	if (!Tex.LoadTextureList()) {
+		Winsys.Quit();
+		exit(1);
+	}
+	FT.LoadFontlist();
+	FT.SetFontFromSettings();
+	Music.LoadMusicList();
+	Music.SetVolume(param.music_volume);
+}
+
+int run_game_once(bool simulated_only = false, SteeringFunc custom = {}) {
+	g_game.simulated_only = simulated_only;
 	// Directly set up a default race and go to Loading state (bypass SplashScreen)
-	init_ui_snow();
+	if (!simulated_only) {
+		init_ui_snow();
+	}
 
 	Course.MakeStandardPolyhedrons();
-	Sound.LoadSoundList();
+	if (!simulated_only) {
+		Sound.LoadSoundList();
+	}
 	(void)Char.LoadCharacterList();
 	Course.LoadObjectTypes();
 	(void)Course.LoadTerrainTypes();
@@ -85,7 +97,11 @@ int run_game_once(SteeringFunc custom = {}) {
 		Events.LoadEventList();
 	}
 
-	if (Players.LoadAvatars()) { // before LoadPlayers !!!
+	if (!simulated_only) {
+		if (Players.LoadAvatars()) { // before LoadPlayers !!!
+			Players.LoadPlayers();
+		}
+	} else {
 		Players.LoadPlayers();
 	}
 
@@ -115,40 +131,32 @@ int run_game_once(SteeringFunc custom = {}) {
 
 	State::manager.ResetQuit();
 	Course.ResetCourse();
+
 	return g_game.score;
+}
+
+void quit_graphics() {
+	Winsys.Quit();
 }
 
 int main(int argc, char **argv) {
 	std::cout << "\n----------- Extreme Tux Racer " ETR_VERSION_STRING " ----------------";
 	std::cout << "\n----------- (C) 2010-2024 Extreme Tux Racer Team  --------\n\n";
+
 	std::srand(std::time(nullptr));
 	InitConfig();
-	InitGame(argc, argv);
-
-	Winsys.Init();
-	InitOpenglExtensions();
-
-	// For checking the joystick and the OpgenGL version (the info is written on the console):
-	//Winsys.PrintJoystickInfo();
-	//PrintGLInfo ();
-
-	// theses resources must or should be loaded before splashscreen starts
-	if (!Tex.LoadTextureList()) {
-		Winsys.Quit();
-		return -1;
-	}
-	FT.LoadFontlist();
-	FT.SetFontFromSettings();
-	Music.LoadMusicList();
-	Music.SetVolume(param.music_volume);
+	InitGame();
 
 	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
 		return { -1.0f, true, false, false }; // Always steer left and accelerate
 	};
-	int score = run_game_once();
-	score = run_game_once();
 
-	Winsys.Quit();
+	int score = 0;
+
+	init_graphics();
+	score = run_game_once(false, {});
+	quit_graphics();
+	score = run_game_once(true, {});
 
 	return 0;
 }
