@@ -198,13 +198,13 @@ int main(int argc, char **argv) {
 	InitGame();
 
 	// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
-	Neat_Instance neat(8, 4, 100);
+	Neat_Instance neat(8, 4, 30);
 	
 	// Set single thread mode due to global game state
 	neat.thread_count = 1;
 	
 	// Set training parameters
-	neat.generation_target = 50;  // Train for 50 generations
+	neat.generation_target = 20;  // Train for 50 generations
 	neat.repetitions = 1;         // Evaluate each network 3 times and average
 	neat.folderpath = "neat_saves"; // Folder to save networks
 	
@@ -219,6 +219,20 @@ int main(int argc, char **argv) {
 	auto networks = neat.get_networks_sorted();
 	if (!networks.empty()) {
 		std::cout << "Best network fitness: " << networks[0].getFitness() << std::endl;
+		
+		// Set the best network for steering
+		current_network = std::make_unique<Network>(networks[0]);
+		g_game.custom_steering = network_steering;
+		
+		// Initialize graphics for non-simulated mode
+		init_graphics();
+		
+		// Run the game once in non-simulated mode to see the results
+		std::cout << "Running game with best network..." << std::endl;
+		run_game_once(false);
+		
+		// Clean up graphics
+		quit_graphics();
 	}
 
 	return 0;
