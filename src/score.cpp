@@ -29,6 +29,7 @@ GNU General Public License for more details.
 #include "course.h"
 #include "spx.h"
 #include "winsys.h"
+#include "physics.h"
 
 CScore Score;
 
@@ -151,7 +152,17 @@ int CScore::CalcRaceResult() {
 	}
 
 	int herringpt = g_game.herring * 10;
-	double timept = Course.GetDimensions().y - (g_game.time * 10);
+	// Incorporate distance traveled down the track (forward progress along z)
+	CControl* ctrl = g_game.player ? g_game.player->ctrl : nullptr;
+	double playLen = (double)Course.GetPlayDimensions().y;
+	double progress = 0.0;
+	if (ctrl) {
+		progress = -ctrl->cpos.z; // z decreases as we go forward
+		if (progress < 0.0) progress = 0.0;
+		if (progress > playLen) progress = playLen;
+	}
+	// Time points relative to progress achieved so far
+	double timept = progress;
 	g_game.score = (int)(herringpt + timept);
 	if (g_game.score < 0) g_game.score = 0;
 

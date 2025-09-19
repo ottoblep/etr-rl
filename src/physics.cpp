@@ -602,7 +602,7 @@ void CControl::SolveOdeSystem(double timestep) {
 
 void CControl::UpdatePlayerPos(float timestep) {
 	// Count calls and abort after threshold
-	if (++update_pos_calls > 12000) {
+	if (++update_pos_calls > 100000) {
 		State::manager.RequestEnterState(GameOver);
 		return;
 	}
