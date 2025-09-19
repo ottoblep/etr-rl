@@ -126,7 +126,7 @@ int run_game_once(bool simulated_only = false, SteeringFunc custom = {}) {
 	g_game.game_type = PRACTICING;
 
 	if (Course.currentCourseList && Course.currentCourseList->size() > 0) {
-		g_game.course = &(*Course.currentCourseList)[0];
+		g_game.course = &(*Course.currentCourseList)[1];
 		g_game.theme_id = (*Course.currentCourseList)[0].music_theme;
 		State::manager.Run(Loading);
 	} else {
@@ -198,13 +198,13 @@ int main(int argc, char **argv) {
 	InitGame();
 
 	// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
-	Neat_Instance neat(8, 4, 30);
+	Neat_Instance neat(8, 4, 100);
 	
 	// Set single thread mode due to global game state
 	neat.thread_count = 1;
 	
 	// Set training parameters
-	neat.generation_target = 20;  // Train for 50 generations
+	neat.generation_target = 15;  // Train for 50 generations
 	neat.repetitions = 1;         // Evaluate each network 3 times and average
 	neat.folderpath = "neat_saves"; // Folder to save networks
 	
