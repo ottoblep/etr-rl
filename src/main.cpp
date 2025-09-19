@@ -190,10 +190,10 @@ SteeringAction network_steering(const TVector3d& pos, const TVector3d& vel, floa
 	std::vector<float> outputs = current_network->calculate(inputs);
 	
 	// Interpret outputs: turn_fact, paddling, braking, charging
-	float turn_fact = outputs.size() > 0 ? outputs[0] : 0.0f;
-	bool paddling = outputs.size() > 1 ? outputs[1] > 0.5f : false;
-	bool braking = outputs.size() > 2 ? outputs[2] > 0.5f : false;
-	bool charging = outputs.size() > 3 ? outputs[3] > 0.5f : false;
+	float turn_fact = (float)outputs[0] - (float)outputs[1];
+	bool paddling = outputs[1] > 0.5f;
+	bool braking = outputs[2] > 0.5f;
+	bool charging = outputs[3] > 0.5f;
 	
 	return { turn_fact, paddling, braking, charging };
 }
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
 		neat_uptr = std::make_unique<Neat_Instance>(*resume_file);
 	} else {
 		// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
-		neat_uptr = std::make_unique<Neat_Instance>(8, 4, 100);
+		neat_uptr = std::make_unique<Neat_Instance>(8, 5, 100);
 	}
 	Neat_Instance &neat = *neat_uptr;
 	
