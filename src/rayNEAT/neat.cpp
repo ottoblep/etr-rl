@@ -86,35 +86,37 @@ Neat_Instance::Neat_Instance(const string &file) {
 void Neat_Instance::run_neat(float (*evalNetwork)(Network)) {
     run_neat_helper([evalNetwork, this]() {
 
-        // Single threaded version
-        /*
-        for (Network &n: networks) {
-            float sum = 0;
-            for (int i = 0; i < repetitions; i++) {
-                sum += evalNetwork(n);
-            }
-            n.setFitness(std::max(sum / float(repetitions), std::numeric_limits<float>::min()));
-        }
-        */
-
-        vector<std::thread> threads;
-
-        for (int i = 0; i < thread_count; i++) {
-            threads.emplace_back([&](size_t start, size_t end) {
-
-                for(size_t i = start; i < end; i++){
-                    float sum = 0;
-                    for (int j = 0; j < repetitions; j++) {
-                        sum += evalNetwork(networks[i]);
-                    }
-                    networks[i].setFitness(std::max(sum / float(repetitions), std::numeric_limits<float>::min()));
+        // Use single threaded version when thread_count is 1
+        if (thread_count == 1) {
+            for (Network &n: networks) {
+                float sum = 0;
+                for (int i = 0; i < repetitions; i++) {
+                    sum += evalNetwork(n);
                 }
+                n.setFitness(std::max(sum / float(repetitions), std::numeric_limits<float>::min()));
+            }
+        } else {
+            // Multi-threaded version with fixed work distribution
+            vector<std::thread> threads;
 
-            }, networks.size() / 10 * i, networks.size() / 10 * (i + 1));
-        }
+            for (int i = 0; i < thread_count; i++) {
+                size_t start = networks.size() / thread_count * i;
+                size_t end = (i == thread_count - 1) ? networks.size() : networks.size() / thread_count * (i + 1);
 
-        for (int i = 0; i < thread_count; i++) {
-            threads[i].join();
+                threads.emplace_back([&, start, end]() {
+                    for(size_t i = start; i < end; i++){
+                        float sum = 0;
+                        for (int j = 0; j < repetitions; j++) {
+                            sum += evalNetwork(networks[i]);
+                        }
+                        networks[i].setFitness(std::max(sum / float(repetitions), std::numeric_limits<float>::min()));
+                    }
+                });
+            }
+
+            for (int i = 0; i < thread_count; i++) {
+                threads[i].join();
+            }
         }
     });
 }
