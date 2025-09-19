@@ -111,7 +111,7 @@ fi
 CPPFLAGS="${CPPFLAGS} -DETR_DATA_DIR=\\\"$datadir\\\""
 
 # Request c++20 compatibility
-CXXFLAGS="${CXXFLAGS} -std=c++20"
+CXXFLAGS="-std=c++20"
 
 AC_CONFIG_FILES([
         Makefile

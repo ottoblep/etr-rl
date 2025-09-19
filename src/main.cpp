@@ -44,6 +44,9 @@ GNU General Public License for more details.
 
 TGameData g_game;
 
+// Global network pointer for evaluation
+Network* current_network = nullptr;
+
 void InitGame() {
 	g_game.toolmode = NONE;
 	g_game.argument = 0;
@@ -141,6 +144,51 @@ void quit_graphics() {
 	Winsys.Quit();
 }
 
+// Network-based steering function
+SteeringAction network_steering(const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) {
+	if (!current_network) {
+		return { 0.0f, false, false, false }; // Default action if no network
+	}
+	
+	// Prepare inputs: pos.x, pos.y, pos.z, vel.x, vel.y, vel.z, time_step, airborne
+	std::vector<float> inputs = {
+		static_cast<float>(pos.x),
+		static_cast<float>(pos.y), 
+		static_cast<float>(pos.z),
+		static_cast<float>(vel.x),
+		static_cast<float>(vel.y),
+		static_cast<float>(vel.z),
+		time_step,
+		airborne ? 1.0f : 0.0f
+	};
+	
+	// Get network outputs
+	std::vector<float> outputs = current_network->calculate(inputs);
+	
+	// Interpret outputs: turn_fact, paddling, braking, charging
+	float turn_fact = outputs.size() > 0 ? outputs[0] : 0.0f;
+	bool paddling = outputs.size() > 1 ? outputs[1] > 0.5f : false;
+	bool braking = outputs.size() > 2 ? outputs[2] > 0.5f : false;
+	bool charging = outputs.size() > 3 ? outputs[3] > 0.5f : false;
+	
+	return { turn_fact, paddling, braking, charging };
+}
+
+// Evaluation function for NEAT
+float evaluate_network(Network network) {
+	// Set the current network for steering
+	current_network = &network;
+	
+	// Set up custom steering to use the network
+	g_game.custom_steering = network_steering;
+	
+	// Run the game simulation
+	int score = run_game_once(true, {});
+	
+	// Return score as fitness (higher is better)
+	return static_cast<float>(score);
+}
+
 int main(int argc, char **argv) {
 	std::cout << "\n----------- Extreme Tux Racer " ETR_VERSION_STRING " ----------------";
 	std::cout << "\n----------- (C) 2010-2024 Extreme Tux Racer Team  --------\n\n";
@@ -149,25 +197,25 @@ int main(int argc, char **argv) {
 	InitConfig();
 	InitGame();
 
-
-	int score = 0;
-
-	Neat_Instance neat(2, 1, 100);
-
-	// Manual run
-	// init_graphics();
-	// score = run_game_once(false, {});
-	// quit_graphics();
-
-	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
-		return { -1.0f, true, false, false }; // Always steer left and accelerate
-	};
-	score = run_game_once(true, {});
-
-	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
-		return { +1.0f, true, false, false }; // Always steer left and accelerate
-	};
-	score = run_game_once(true, {});
+	// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
+	Neat_Instance neat(8, 4, 100);
+	
+	// Set training parameters
+	neat.generation_target = 50;  // Train for 50 generations
+	neat.repetitions = 3;         // Evaluate each network 3 times and average
+	
+	std::cout << "Starting NEAT training..." << std::endl;
+	
+	// Run NEAT training
+	neat.run_neat(evaluate_network);
+	
+	std::cout << "Training complete!" << std::endl;
+	
+	// Get the best network
+	auto networks = neat.get_networks_sorted();
+	if (!networks.empty()) {
+		std::cout << "Best network fitness: " << networks[0].getFitness() << std::endl;
+	}
 
 	return 0;
 }
