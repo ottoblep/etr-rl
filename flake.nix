@@ -58,7 +58,7 @@
             pkgs.gcc
           ];
           buildInputs = [
-            pkgs.gdb
+            pkgs.lldb
             pkgs.libGLU
             pkgs.libGL
             pkgs.xorg.libX11

@@ -6,12 +6,13 @@
     "configurations": [
 
         {
-            "name": "Debug",
-            "type": "gdb",
+            "type": "lldb-dap",
             "request": "launch",
-            "target": "./build/bin/etr",
-            "cwd": "${workspaceRoot}",
-            "valuesFormatting": "parseText"
+            "name": "Debug",
+            "program": "${workspaceRoot}/build/bin/etr",
+            "args": [],
+            "env": [],
+            "cwd": "${workspaceRoot}"
         }
     ]
 }
