@@ -120,11 +120,9 @@ void State::Manager::PollEvent() {
 void State::Manager::CallLoopFunction() {
 	check_gl_error();
 
-	if (g_game.simulated_only) {
-		g_game.time_step = 1.0f / 60.0f;  // Increased from 0.0001f for faster simulation
-	} else {
-		g_game.time_step = std::max(0.0001f, timer.getElapsedTime().asSeconds());
-		timer.restart();
-	}
+	g_game.time_step = 1.0f / 60.0f;
+	// g_game.time_step = std::max(0.0001f, timer.getElapsedTime().asSeconds());
+	timer.restart();
+
 	current->Loop(g_game.time_step);
 }
