@@ -282,6 +282,9 @@ void CTexture::DrawNumChr(char c, int x, int y, int w, int h) {
 }
 
 void CTexture::DrawNumStr(const std::string& s, int x, int y, float size, const sf::Color& col) {
+	if (g_game.simulated_only) {
+		return;
+	}
 	if (!BindTex(NUMERIC_FONT)) {
 		Message("DrawNumStr: missing texture");
 		return;
