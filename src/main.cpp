@@ -39,13 +39,13 @@ GNU General Public License for more details.
 #include <ctime>
 #include <cstring>
 #include <functional>
+#include <memory>
 
 #include "rayNEAT/rayNEAT.h"
 
 TGameData g_game;
 
-// Global network pointer for evaluation
-Network* current_network = nullptr;
+thread_local std::unique_ptr<Network> current_network = nullptr;
 
 void InitGame() {
 	g_game.toolmode = NONE;
@@ -177,7 +177,7 @@ SteeringAction network_steering(const TVector3d& pos, const TVector3d& vel, floa
 // Evaluation function for NEAT
 float evaluate_network(Network network) {
 	// Set the current network for steering
-	current_network = &network;
+	current_network = std::make_unique<Network>(network);
 	
 	// Set up custom steering to use the network
 	g_game.custom_steering = network_steering;
