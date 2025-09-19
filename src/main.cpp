@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 	InitGame();
 
 	// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
-	Neat_Instance neat(8, 4, 10);
+	Neat_Instance neat(8, 4, 100);
 	
 	// Set single thread mode due to global game state
 	neat.thread_count = 1;
