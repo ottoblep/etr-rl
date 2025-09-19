@@ -196,10 +196,13 @@ void Neat_Instance::assign_networks_to_species() {
 }
 
 void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
+    std::cout << "Starting run_neat_helper\n";
 
     //prime the pump by evaluating, sorting and speciating the initial networks
+    std::cout << "Evaluating initial networks\n";
     evalNetworks();
 
+    std::cout << "Sorting initial networks by fitness\n";
     std::sort(networks.begin(), networks.end(), [&](const Network &n1, const Network &n2) {
         return
                 n1.getFitness() * pow(float(n1.getNodes().size()), node_count_exponent)
@@ -207,18 +210,21 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
                 n2.getFitness() * pow(float(n2.getNodes().size()), node_count_exponent);
     });
 
+    std::cout << "Assigning initial networks to species\n";
     assign_networks_to_species();
 
+    std::cout << "Entering main generation loop\n";
     while (generation_number++ < generation_target) {
-
+        std::cout << "Generation " << generation_number << " starting\n";
 
         //the best network is chosen as species representative for the generation about to be calculated
+        std::cout << "Setting species representatives\n";
         for (Species &s: species) {
             s.representative = s.networks[0];
         }
 
-
         //fitness sharing to assign each species an evolutionary value
+        std::cout << "Calculating fitness sharing\n";
         float fitness_total = 0.f;
         for (Species &s: species) {
             s.avg_fitness = 0.f;
@@ -229,6 +235,7 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
         }
 
         //calculate the total number of networks to be eliminated
+        std::cout << "Calculating elimination total\n";
         int elimination_total = std::accumulate(
                 species.begin(), species.end(), 0,
                 [this](int sum, const Species &s) {
@@ -237,24 +244,31 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
         );
 
         //clear the network list so the next generation may be added to it
+        std::cout << "Clearing network list for new generation\n";
         networks.clear();
 
+        std::cout << "Processing each species for reproduction\n";
         for (Species &s: species) {
             //each species eliminates the required amount of members. The integer cast ensures at least 1 member will remain
             int elimination = int(float(s.networks.size()) * elimination_percentage);
             //each species receives offspring according to its fitness
             int offspring = int(s.avg_fitness / fitness_total * float(elimination_total));
 
+            std::cout << "Species processing: elimination=" << elimination << ", offspring=" << offspring << "\n";
+
             //eliminate weakest members (list is already sorted)
+            std::cout << "Eliminating weakest members\n";
             s.networks.erase(s.networks.end() - elimination, s.networks.end());
 
             //if species is large enough, immediately push an unmodified champion to the main network list without mutating
             if (s.networks.size() > 2) {
+                std::cout << "Pushing champion to new generation\n";
                 networks.push_back(s.networks[0]);
                 offspring--;
             }
 
             //refill with offspring
+            std::cout << "Refilling species with offspring\n";
             for (int i = 0; i < s.networks.size() + offspring; i++) {
                 if (rnd_f(0.f, 1.f) > offspring_mating_percentage || s.networks.size() == 1) {
                     //mutation without crossover
@@ -275,6 +289,7 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
         }
 
         //refill rounding errors with interspecies reproduction
+        std::cout << "Refilling rounding errors with interspecies reproduction\n";
         while (networks.size() < population) {
             int father = GetRandomValue(0, int(networks.size() - 2));
             int mother = GetRandomValue(father + 1, int(networks.size() - 1));
@@ -282,13 +297,13 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
             networks.push_back(n);
         }
 
-
         //re-calculate nodes in use
 
         //every 10 algo-steps, re-evaluate which nodes are actively used by networks to allow re-using of smaller indices
         // (limiting size of innovation list, since old connections can also be reused)
         //none of these old connections can currently be in use, else their start & end points would also be in use
         if (generation_number % 10 == 0) {
+            std::cout << "Re-evaluating used nodes (generation " << generation_number << ")\n";
             for (Node_Gene &n: node_genes) {
                 n.used = false;
             }
@@ -301,9 +316,11 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
         }
 
         //calculate fitness for every network
+        std::cout << "Evaluating fitness for new generation\n";
         evalNetworks();
 
         //sort by descending fitness -> all later species will be sorted
+        std::cout << "Sorting new generation by fitness\n";
         std::sort(networks.begin(), networks.end(), [&](const Network &n1, const Network &n2) {
             return
                     n1.getFitness() * pow(float(n1.getNodes().size()), node_count_exponent)
@@ -312,20 +329,25 @@ void Neat_Instance::run_neat_helper(const std::function<void()> &evalNetworks) {
         });
 
         //set last_innovation values
+        std::cout << "Updating last innovation values\n";
         if (networks[0].getFitness() > last_innovation_fitness) {
             last_innovation_fitness = networks[0].getFitness();
             last_innovation_generation = generation_number;
         }
 
         //speciate networks
+        std::cout << "Speciating networks\n";
         assign_networks_to_species();
 
         //save values
         if (generation_number % save_intervall == 0 && !folderpath.empty()) {
+            std::cout << "Saving generation " << generation_number << "\n";
             save();
         }
+        std::cout << "Printing generation summary\n";
         print();
     }
+    std::cout << "run_neat_helper completed\n";
 }
 
 Node_Gene Neat_Instance::request_node_gene(Connection_Gene split) {
