@@ -206,6 +206,7 @@ int main(int argc, char **argv) {
 	// Set training parameters
 	neat.generation_target = 50;  // Train for 50 generations
 	neat.repetitions = 3;         // Evaluate each network 3 times and average
+	neat.folderpath = "neat_saves"; // Folder to save networks
 	
 	std::cout << "Starting NEAT training..." << std::endl;
 	
