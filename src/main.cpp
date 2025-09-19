@@ -147,15 +147,22 @@ int main(int argc, char **argv) {
 	InitConfig();
 	InitGame();
 
-	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
-		return { -1.0f, true, false, false }; // Always steer left and accelerate
-	};
 
 	int score = 0;
 
-	init_graphics();
-	score = run_game_once(false, {});
-	quit_graphics();
+	// Manual run
+	// init_graphics();
+	// score = run_game_once(false, {});
+	// quit_graphics();
+
+	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
+		return { -1.0f, true, false, false }; // Always steer left and accelerate
+	};
+	score = run_game_once(true, {});
+
+	g_game.custom_steering = [](const TVector3d& pos, const TVector3d& vel, float time_step, bool airborne) -> SteeringAction {
+		return { +1.0f, true, false, false }; // Always steer left and accelerate
+	};
 	score = run_game_once(true, {});
 
 	return 0;

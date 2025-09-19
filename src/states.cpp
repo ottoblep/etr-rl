@@ -121,7 +121,7 @@ void State::Manager::CallLoopFunction() {
 	check_gl_error();
 
 	if (g_game.simulated_only) {
-		g_game.time_step = 1.0f / 60.0f;  // Fixed time step for simulation
+		g_game.time_step = 0.0001f;
 	} else {
 		g_game.time_step = std::max(0.0001f, timer.getElapsedTime().asSeconds());
 		timer.restart();
