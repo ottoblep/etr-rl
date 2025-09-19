@@ -58,6 +58,9 @@ CControl::CControl() :
 	finish_speed = 0;
 
 	viewmode = ABOVE;
+
+	// initialize update counter
+	update_pos_calls = 0;
 }
 
 // --------------------------------------------------------------------
@@ -97,6 +100,9 @@ void CControl::Init() {
 	flip_factor = 0;
 
 	ode_time_step = -1;
+
+	// reset counter on init
+	update_pos_calls = 0;
 }
 // --------------------------------------------------------------------
 //					collision
@@ -595,6 +601,11 @@ void CControl::SolveOdeSystem(double timestep) {
 // --------------------------------------------------------------------
 
 void CControl::UpdatePlayerPos(float timestep) {
+	// Count calls and abort after threshold
+	if (++update_pos_calls > 12000) {
+		State::manager.RequestEnterState(GameOver);
+		return;
+	}
 	CCharShape *shape = g_game.character->shape;
 	double paddling_factor;
 	double flap_factor;

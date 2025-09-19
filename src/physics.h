@@ -101,6 +101,9 @@ private:
 	void     SetTuxPosition(double speed);
 	double   AdjustTimeStep(double h, const TVector3d& vel);
 	void     SolveOdeSystem(double timestep);
+
+	// Count UpdatePlayerPos calls to allow aborting after a threshold
+	unsigned int update_pos_calls;
 public:
 	CControl();
 
