@@ -162,8 +162,9 @@ int CScore::CalcRaceResult() {
 		if (progress > playLen) progress = playLen;
 	}
 	// Time points relative to progress achieved so far
-	double timept = progress;
-	g_game.score = (int)(herringpt + timept);
+	double timept = 200 - g_game.time - 100 * ((playLen - progress) / playLen);
+	g_game.score = timept;
+	//g_game.score = (int)((herringpt / g_game.time);
 	if (g_game.score < 0) g_game.score = 0;
 
 	return AddScore(Course.currentCourseList->name, g_game.course->dir, TScore(g_game.player->name, g_game.score, g_game.herring, g_game.time));
