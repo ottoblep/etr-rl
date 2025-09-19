@@ -438,11 +438,16 @@ void CRacing::Loop(float time_step) {
 		Reshape(Winsys.resolution.width, Winsys.resolution.height);
 		Winsys.SwapBuffers();
 	}
-	if (g_game.finish == false) g_game.time += time_step;
+    if (g_game.finish == false) g_game.time += time_step;
+
+    // Terminate race when gold time is exceeded
+    if (!g_game.finish && g_game.race && (g_game.time > g_game.race->time.z)) {
+        State::manager.RequestEnterState(GameOver);
+    }
 }
 
 void CRacing::Exit() {
-	Winsys.KeyRepeat(true);
-	Sound.HaltAll();
-	break_track_marks();
+    Winsys.KeyRepeat(true);
+    Sound.HaltAll();
+    break_track_marks();
 }
