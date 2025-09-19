@@ -48,7 +48,13 @@ etr_SOURCES =		\
 	tux.cpp		\
 	vectors.cpp	\
 	view.cpp	\
-	winsys.cpp
+	winsys.cpp	\
+	rayNEAT/activation_functions.cpp	\
+	rayNEAT/connection_gene.cpp	\
+	rayNEAT/neat.cpp	\
+	rayNEAT/network.cpp	\
+	rayNEAT/node_gene.cpp	\
+	rayNEAT/utility.cpp
 
 noinst_HEADERS =	\
 	audio.h		\
@@ -100,4 +106,5 @@ noinst_HEADERS =	\
 	vectors.h	\
 	version.h	\
 	view.h		\
-	winsys.h
+	winsys.h	\
+	rayNEAT/rayNEAT.h

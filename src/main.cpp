@@ -40,6 +40,8 @@ GNU General Public License for more details.
 #include <cstring>
 #include <functional>
 
+#include "rayNEAT/rayNEAT.h"
+
 TGameData g_game;
 
 void InitGame() {
@@ -149,6 +151,8 @@ int main(int argc, char **argv) {
 
 
 	int score = 0;
+
+	Neat_Instance neat(2, 1, 100);
 
 	// Manual run
 	// init_graphics();
