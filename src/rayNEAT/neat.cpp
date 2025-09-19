@@ -34,29 +34,30 @@ Neat_Instance::Neat_Instance(const string &file) {
     string line;
     //parameters
     std::getline(savefile, line);
-    input_count = std::stoi(line);
+    input_count = safe_to_int(line, 0);
     std::getline(savefile, line);
-    output_count = std::stoi(line);
+    output_count = safe_to_int(line, 0);
     std::getline(savefile, line);
-    repetitions = std::stoi(line);
+    repetitions = safe_to_int(line, 1);
     std::getline(savefile, line);
-    generation_number = std::stoi(line);
+    generation_number = safe_to_int(line, 0);
     std::getline(savefile, line);
-    generation_target = std::stoi(line);
+    generation_target = safe_to_int(line, generation_number);
     std::getline(savefile, line);
-    population = std::stoi(line);
+    population = safe_to_int(line, 0);
     std::getline(savefile, line);
-    speciation_threshold = std::stof(line);
+    speciation_threshold = safe_to_float(line, 1.0f);
     //load node data
     std::getline(savefile, line);
     vector<string> node_data = split(line, ";");
     for (string &nd: node_data) {
         vector<string> datapoints = split(nd, "|");
+        if (datapoints.size() < 3) continue;
         node_genes.push_back(
                 {
-                        static_cast<node_id>(std::stoi(datapoints[0])),
-                        std::stof(datapoints[1]),
-                        std::stof(datapoints[2]),
+                        static_cast<node_id>(safe_to_int(datapoints[0], 0)),
+                        safe_to_float(datapoints[1], 0.f),
+                        safe_to_float(datapoints[2], 0.f),
                         true
                 });
     }
@@ -65,17 +66,20 @@ Neat_Instance::Neat_Instance(const string &file) {
     vector<string> connection_data = split(line, ";");
     for (string &cd: connection_data) {
         vector<string> datapoints = split(cd, "|");
+        if (datapoints.size() < 3) continue;
         connection_genes.insert(
                 {
-                        static_cast<connection_id>(std::stoi(datapoints[0])),
-                        static_cast<connection_id>(std::stoi(datapoints[1])),
-                        static_cast<connection_id>(std::stoi(datapoints[2]))
+                        static_cast<connection_id>(safe_to_int(datapoints[0], 0)),
+                        static_cast<connection_id>(safe_to_int(datapoints[1], 0)),
+                        static_cast<connection_id>(safe_to_int(datapoints[2], 0))
                 });
     }
 
     networks.reserve(population);
     for (int i = 0; i < population; i++) {
         std::getline(savefile, line);
+        if (!savefile) break;
+        if (line.empty()) { i--; continue; }
         networks.emplace_back(this, line);
     }
 
@@ -418,7 +422,7 @@ void Neat_Instance::save() const {
             << population << "\n"
             << speciation_threshold << "\n";
     //used nodes is not saved -> on eventual run it would be updated soon enough
-    //save connection gene data -> this allows networks to only save innovation numbers
+    //save connection gene data-> this allows networks to only save innovation numbers
     for (const Node_Gene &ng: node_genes) {
         savefile << ng.id << "|" << ng.x << "|" << ng.y << ";";
     }

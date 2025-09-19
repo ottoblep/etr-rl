@@ -40,12 +40,36 @@ GNU General Public License for more details.
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <filesystem>
+#include <optional>
 
 #include "rayNEAT/rayNEAT.h"
 
 TGameData g_game;
 
 thread_local std::unique_ptr<Network> current_network = nullptr;
+
+// Helper: find the most recent .neat file in a directory
+static std::optional<std::string> find_latest_neat_file(const std::string &dir) {
+	try {
+		namespace fs = std::filesystem;
+		if (!fs::exists(dir)) return std::nullopt;
+		std::optional<std::string> best_path;
+		fs::file_time_type best_time{};
+		for (const auto &entry : fs::directory_iterator(dir)) {
+			if (entry.is_regular_file() && entry.path().extension() == ".neat") {
+				auto t = fs::last_write_time(entry);
+				if (!best_path || t > best_time) {
+					best_path = entry.path().string();
+					best_time = t;
+				}
+			}
+		}
+		return best_path;
+	} catch (...) {
+		return std::nullopt;
+	}
+}
 
 void InitGame() {
 	g_game.toolmode = NONE;
@@ -197,21 +221,39 @@ int main(int argc, char **argv) {
 	InitConfig();
 	InitGame();
 
-	// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
-	Neat_Instance neat(8, 4, 100);
+	// Try to resume from the latest saved NEAT checkpoint if available
+	std::string neat_save_dir = "neat_saves";
+	auto resume_file = find_latest_neat_file(neat_save_dir);
+	std::unique_ptr<Neat_Instance> neat_uptr;
+	if (resume_file) {
+		std::cout << "Found NEAT checkpoint: " << *resume_file << "\nResuming training..." << std::endl;
+		neat_uptr = std::make_unique<Neat_Instance>(*resume_file);
+	} else {
+		// Initialize NEAT with 8 inputs (pos x,y,z, vel x,y,z, time_step, airborne) and 4 outputs (turn, paddle, brake, charge)
+		neat_uptr = std::make_unique<Neat_Instance>(8, 4, 100);
+	}
+	Neat_Instance &neat = *neat_uptr;
 	
-	// Set single thread mode due to global game state
-	neat.thread_count = 1;
+	// Configure NEAT parameters
+	neat.thread_count = 1;        // Set single thread mode due to global game state
+	neat.repetitions = 1;         // Evaluate each network once
+	neat.folderpath = neat_save_dir; // Folder to save/load networks
 	
-	// Set training parameters
-	neat.generation_target = 15;  // Train for 50 generations
-	neat.repetitions = 1;         // Evaluate each network 3 times and average
-	neat.folderpath = "neat_saves"; // Folder to save networks
+	// If resuming, extend the previous target by N generations; else set a fresh target
+	const unsigned int extra_generations = 5;
+	if (resume_file) {
+		neat.generation_target = neat.generation_target + extra_generations;
+	} else {
+		neat.generation_target = extra_generations;
+	}
 	
 	std::cout << "Starting NEAT training..." << std::endl;
 	
 	// Run NEAT training
 	neat.run_neat(evaluate_network);
+	
+	// Always save a final checkpoint at the end of training
+	neat.save();
 	
 	std::cout << "Training complete!" << std::endl;
 	

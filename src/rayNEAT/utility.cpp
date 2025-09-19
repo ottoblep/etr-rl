@@ -30,3 +30,26 @@ float rnd_f(float lo, float hi) {
 int GetRandomValue(int lo, int hi) {
     return lo + rand() % (hi - lo + 1);
 }
+
+float safe_to_float(const string &s, float defaultVal) {
+    try {
+        if (s.empty()) return defaultVal;
+        size_t pos = 0;
+        float v = std::stof(s, &pos);
+        // Accept if we consumed something; ignore trailing empties
+        return v;
+    } catch (...) {
+        return defaultVal;
+    }
+}
+
+int safe_to_int(const string &s, int defaultVal) {
+    try {
+        if (s.empty()) return defaultVal;
+        size_t pos = 0;
+        int v = std::stoi(s, &pos);
+        return v;
+    } catch (...) {
+        return defaultVal;
+    }
+}

@@ -22,24 +22,31 @@ Network::Network(Neat_Instance *neatInstance) : neat_instance(neatInstance), fit
 Network::Network(Neat_Instance *neatInstance, const string &line) : neat_instance(neatInstance) {
     vector<string> datapoints = split(line, "||");
     //fitness
-    fitness = std::stof(datapoints[0]);
+    fitness = datapoints.empty() ? 0.f : safe_to_float(datapoints[0], 0.f);
     //nodes
-    vector<string> node_data = split(datapoints[1], ";");
-    for (string &nd: node_data) {
-        auto id = node_id(std::stoi(nd));
-        nodes[id] = {neat_instance->request_node_gene(id), 0.f};
+    if (datapoints.size() > 1) {
+        vector<string> node_data = split(datapoints[1], ";");
+        for (string &nd: node_data) {
+            if (nd.empty()) continue;
+            auto id = node_id(safe_to_int(nd, 0));
+            nodes[id] = {neat_instance->request_node_gene(id), 0.f};
+        }
     }
     //connections
-    vector<string> connection_data = split(datapoints[2], ";");
-    for (string &cd: connection_data) {
-        vector<string> connection_datapoints = split(cd, "|");
-        //search gene with fitting id and add it
-        connection_id id = std::stoi(connection_datapoints[0]);
-        connections[id] = {
-                neat_instance->request_connection_gene(id),
-                std::stoi(connection_datapoints[1]) != 0,
-                std::stof(connection_datapoints[2])
-        };
+    if (datapoints.size() > 2) {
+        vector<string> connection_data = split(datapoints[2], ";");
+        for (string &cd: connection_data) {
+            if (cd.empty()) continue;
+            vector<string> connection_datapoints = split(cd, "|");
+            if (connection_datapoints.size() < 3) continue;
+            //search gene with fitting id and add it
+            connection_id id = safe_to_int(connection_datapoints[0], 0);
+            connections[id] = {
+                    neat_instance->request_connection_gene(id),
+                    safe_to_int(connection_datapoints[1], 0) != 0,
+                    safe_to_float(connection_datapoints[2], 0.f)
+            };
+        }
     }
 }
 

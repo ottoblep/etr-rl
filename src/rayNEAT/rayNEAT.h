@@ -377,5 +377,9 @@ vector<string> split(const string &string_to_split, const string &delimiter);
 //returns a randomly selected float between the two passed values
 float rnd_f(float lo, float hi);
 
+// Safe parsing helpers (return default on parse errors instead of throwing)
+float safe_to_float(const string &s, float defaultVal = 0.f);
+int safe_to_int(const string &s, int defaultVal = 0);
+
 
 #endif //RAYNEAT_RAYNEAT_H
