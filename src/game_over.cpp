@@ -148,7 +148,9 @@ void GameOverMessage(const CControl *ctrl) {
 void CGameOver::Enter() {
 	if (!g_game.raceaborted) highscore_pos = Score.CalcRaceResult();
 
-	std::cout << "Score: " << g_game.score << std::endl;
+	if (!g_game.simulated_only) {
+		std::cout << "Score: " << g_game.score << std::endl;
+	}
 	State::manager.RequestQuit();
 }
 
