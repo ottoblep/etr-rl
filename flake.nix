@@ -58,6 +58,7 @@
             pkgs.gcc
           ];
           buildInputs = [
+            pkgs.clang-tools
             pkgs.lldb
             pkgs.libGLU
             pkgs.libGL
